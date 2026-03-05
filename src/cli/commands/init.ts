@@ -59,6 +59,43 @@ graphql:
       - body.data.user.id exists
 `;
 
+const sampleCollectionJSON = `{
+  "version": "1.0",
+  "name": "Sample API Tests",
+  "description": "Basic example collection",
+  "variables": {
+    "baseUrl": "http://localhost:3000",
+    "timeout": 30000
+  },
+  "tests": [
+    {
+      "id": "get-health",
+      "name": "Check API Health",
+      "request": {
+        "method": "GET",
+        "url": "\${baseUrl}/health"
+      },
+      "assertions": ["status == 200"]
+    },
+    {
+      "id": "create-item",
+      "name": "Create New Item",
+      "request": {
+        "method": "POST",
+        "url": "\${baseUrl}/items",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "Sample Item",
+          "description": "This is a test item"
+        }
+      },
+      "assertions": ["status == 201", "body.id exists"]
+    }
+  ]
+}`;
+
 const sampleEnv = `# Local environment variables
 # Never commit this file to version control
 
@@ -72,10 +109,15 @@ export const initCommand = new Command('init')
   .description('Initialize a new Zelte project with sample files')
   .option('-d, --dir <path>', 'directory to initialize', '.')
   .option('-f, --force', 'overwrite existing files')
+  .option('--yaml', 'use YAML format for collection (default)')
+  .option('--json', 'use JSON format for collection')
   .action(async (options: any) => {
     try {
       const dir = options.dir;
-      const collectionPath = resolve(dir, 'collection.zelte.yaml');
+      // Default to YAML if neither is specified, or if --yaml is explicitly set
+      const useJson = options.json && !options.yaml;
+      const collectionFileName = useJson ? 'collection.zelte.json' : 'collection.zelte.yaml';
+      const collectionPath = resolve(dir, collectionFileName);
       const envPath = resolve(dir, '.zelte.env');
       const envExamplePath = resolve(dir, '.zelte.env.example');
 
@@ -93,8 +135,9 @@ export const initCommand = new Command('init')
         }
       }
 
-      // Create collection file
-      writeFileSync(collectionPath, sampleCollection, 'utf-8');
+      // Create collection file (YAML or JSON)
+      const collectionContent = useJson ? sampleCollectionJSON : sampleCollection;
+      writeFileSync(collectionPath, collectionContent, 'utf-8');
       logger.success(`✓ Created ${collectionPath}`);
 
       // Create .env file
@@ -109,8 +152,8 @@ export const initCommand = new Command('init')
       logger.info('');
       logger.info('Next steps:');
       logger.info('1. Update .gitignore to include: .zelte.env');
-      logger.info('2. Edit collection.zelte.yaml with your API endpoints');
-      logger.info('3. Run: zelte run collection.zelte.yaml');
+      logger.info(`2. Edit ${collectionFileName} with your API endpoints`);
+      logger.info(`3. Run: zelte run ${collectionFileName}`);
     } catch (error) {
       logger.error('Failed to initialize project:', error instanceof Error ? error.message : String(error));
       process.exit(1);

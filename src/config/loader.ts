@@ -86,16 +86,24 @@ export class ConfigLoader {
 
       let collection: any;
       if (ext === 'json') {
-        collection = JSON.parse(content);
+        try {
+          collection = JSON.parse(content);
+        } catch (parseError) {
+          throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+        }
       } else {
-        collection = YAML.parse(content);
+        try {
+          collection = YAML.parse(content);
+        } catch (parseError) {
+          throw new Error(`Invalid YAML format: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+        }
       }
 
       logger.debug(`Loaded collection from: ${filePath}`);
       return collection as Collection;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to load collection file '${filePath}': ${message}`);
+      throw new Error(`Failed to load collection file '${filePath}': ${message}. Supported formats: .yaml, .json`);
     }
   }
 

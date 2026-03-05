@@ -8,8 +8,8 @@ import chalk from 'chalk';
 import { logger } from '../../utils/logger';
 
 export const validateCommand = new Command('validate')
-  .description('Validate collection and environment files')
-  .argument('[path]', 'path to collection file', 'collection.yaml')
+  .description('Validate collection and environment files (YAML or JSON)')
+  .argument('[path]', 'path to collection file (*.yaml or *.json)', 'collection.yaml')
   .option('-e, --env <name>', 'environment file to validate')
   .action(async (path: string, options: any) => {
     try {

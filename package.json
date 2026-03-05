@@ -4,7 +4,7 @@
   "description": "Lightweight terminal-first API testing tool for backend engineers",
   "main": "dist/cli/index.js",
   "bin": {
-    "zelte": "dist/cli/index.js"
+    "zelte": "./dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -38,11 +38,14 @@
   "homepage": "https://github.com/Cintoma123/zelte#readme",
   "dependencies": {
     "axios": "^1.6.0",
+    "boxen": "^8.0.1",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "date-fns": "^3.0.0",
     "dotenv": "^16.3.1",
+    "figlet": "^1.10.0",
     "glob": "^10.3.0",
+    "gradient-string": "^3.0.0",
     "inquirer": "^9.2.7",
     "jsonpath-plus": "^10.4.0",
     "ora": "^8.0.1",
@@ -50,6 +53,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/boxen": "^2.1.0",
     "@types/glob": "^8.1.0",
     "@types/inquirer": "^9.0.3",
     "@types/jest": "^29.5.0",

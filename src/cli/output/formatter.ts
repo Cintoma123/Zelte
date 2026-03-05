@@ -8,7 +8,7 @@ import chalk from 'chalk';
 export interface TestResult {
   id: string;
   name: string;
-  status: 'passed' | 'failed' | 'skipped';
+  status: 'passed' | 'failed' | 'skipped' | 'pending';
   duration: number;
   error?: string;
   assertions?: {

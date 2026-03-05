@@ -8,8 +8,8 @@ import chalk from 'chalk';
 import { logger } from '../../utils/logger';
 
 export const testCommand = new Command('test')
-  .description('Run API tests from a collection file')
-  .argument('[collection]', 'path to collection file', 'collection.yaml')
+  .description('Run API tests from a collection file (YAML or JSON)')
+  .argument('[collection]', 'path to collection file (*.yaml or *.json)', 'collection.yaml')
   .option('-e, --env <name>', 'environment to use')
   .option('-o, --output <format>', 'output format (table, json, tap, junit)', 'table')
   .option('--timeout <ms>', 'request timeout in milliseconds', '30000')

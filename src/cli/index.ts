@@ -18,7 +18,10 @@ import { testCommand } from './commands/test';
 import { validateCommand } from './commands/validate';
 import { initCommand } from './commands/init';
 import { envCommand } from './commands/env';
+import { watchCommand } from './commands/watch';
+import { interactiveCommand } from './commands/interactive';
 import { logger, configureLogger } from '../utils/logger';
+import { showWelcomeScreen, shouldShowWelcome } from './welcome';
 
 const program = new Command();
 
@@ -49,6 +52,8 @@ program.addCommand(testCommand);
 program.addCommand(validateCommand);
 program.addCommand(initCommand);
 program.addCommand(envCommand);
+program.addCommand(watchCommand);
+program.addCommand(interactiveCommand);
 
 // Configure help and usage
 program.configureHelp({
@@ -61,8 +66,11 @@ program.on('--help', () => {
   console.log('');
   console.log('Examples:');
   console.log('');
-  console.log('  # Run tests from a collection');
+  console.log('  # Run tests from a YAML collection');
   console.log('  $ zelte run ./api-tests.zelte.yaml');
+  console.log('');
+  console.log('  # Run tests from a JSON collection');
+  console.log('  $ zelte run ./api-tests.zelte.json');
   console.log('');
   console.log('  # Run with specific environment');
   console.log('  $ zelte run ./api-tests.zelte.yaml --env production');
@@ -70,10 +78,13 @@ program.on('--help', () => {
   console.log('  # Run with JSON output for CI integration');
   console.log('  $ zelte run ./api-tests.zelte.yaml --output json > results.json');
   console.log('');
+  console.log('  # Validate collection file');
+  console.log('  $ zelte validate ./api-tests.zelte.json');
+  console.log('');
   console.log('  # Initialize a new project');
   console.log('  $ zelte init');
   console.log('');
-  console.log('Documentation: https://github.com/zelte/zelte');
+  console.log('Documentation: https://github.com/Cintoma123/zelte');
   console.log('');
 });
 
@@ -97,9 +108,15 @@ program.configureOutput({
 // Parse arguments and execute
 (async () => {
   try {
+    // Check if we should show the welcome screen
+    if (shouldShowWelcome(process.argv)) {
+      showWelcomeScreen(program);
+      process.exit(0);
+    }
+
     await program.parseAsync();
 
-    // If no command provided, show help
+    // If no command provided, show help (fallback)
     if (!process.argv.slice(2).length) {
       program.outputHelp();
       process.exit(0);
