@@ -2,7 +2,12 @@
 
 ## Overview
 
-The Zelte CLI now features a premium, terminal-first welcome screen that appears when users type `zelte` without any commands. This creates a polished, professional first impression similar to tools like Gemini CLI, Vercel CLI, and Prisma CLI.
+The Zelte CLI now features a premium, terminal-first welcome screen that appears when users type `zelte` without any commands. Welcome Screen
+$ zelte
+# Shows premium welcome screen with logo, examples, and commands
+Detailed Help
+$ zelte --help
+# Shows Commander.js help output (not welcome screen)
 
 ## Features
 

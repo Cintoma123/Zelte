@@ -1,0 +1,91 @@
+version: '1.0'
+name: API Authentication Tests
+description: Example tests showing how to use environment variables for sensitive data
+
+variables:
+  base_url: ${API_BASE_URL}
+  timeout: 5000
+
+tests:
+  - id: auth-test
+    name: Authentication Test
+    description: Test API authentication using environment variables
+    request:
+      method: POST
+      url: ${base_url}/auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        username: ${API_USERNAME}
+        password: ${API_PASSWORD}
+    assertions:
+      - statusCode == 200
+      - body.token != null
+    expect:
+      variables:
+        auth_token: data.token
+
+  - id: protected-api-test
+    name: Protected API Test
+    description: Test protected endpoint using bearer token from environment
+    request:
+      method: GET
+      url: ${base_url}/protected/data
+      headers:
+        Authorization: Bearer ${API_BEARER_TOKEN}
+        Content-Type: application/json
+    assertions:
+      - statusCode == 200
+      - body.success == true
+
+  - id: api-key-test
+    name: API Key Authentication Test
+    description: Test API key authentication
+    request:
+      method: GET
+      url: ${base_url}/api/data
+      headers:
+        X-API-Key: ${API_BEARER_TOKEN}
+        Content-Type: application/json
+    assertions:
+      - statusCode == 200
+      - body.data != null
+
+  - id: oauth-test
+    name: OAuth Authentication Test
+    description: Test OAuth flow using client credentials from environment
+    request:
+      method: POST
+      url: ${base_url}/oauth/token
+      headers:
+        Content-Type: application/x-www-form-urlencoded
+      body: grant_type=client_credentials&client_id=${OAUTH_CLIENT_ID}&client_secret=${OAUTH_CLIENT_SECRET}
+    assertions:
+      - statusCode == 200
+      - body.access_token != null
+    expect:
+      variables:
+        oauth_token: data.access_token
+
+graphql:
+  - id: graphql-auth-test
+    name: GraphQL Authentication Test
+    description: Test GraphQL endpoint with authentication
+    endpoint: ${base_url}/graphql
+    query: |
+      query GetUser($id: ID!) {
+        user(id: $id) {
+          id
+          name
+          email
+        }
+      }
+    variables:
+      id: "123"
+    auth:
+      type: bearer
+      token: ${API_BEARER_TOKEN}
+    assertions:
+      - statusCode == 200
+      - data.data.user != null
+      - data.data.user.id == "123"
