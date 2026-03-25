@@ -1,0 +1,97 @@
+name: Publish Release to NPM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'src/**'
+      - '.github/workflows/publish-release.yml'
+  workflow_dispatch:
+
+jobs:
+  quality-check:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint
+      
+      - name: Run tests
+        run: npm test
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+      
+      - name: Security vulnerability check
+        uses: actions/dependency-check_action@main
+        with:
+          project: 'zelte'
+          path: '.'
+          format: 'JSON'
+
+  build-and-publish:
+    name: Build and Publish Release
+    runs-on: ubuntu-latest
+    needs: [quality-check, security-scan]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Get version
+        id: version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+      - name: Publish to npm (stable)
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.PACKAGE_VERSION }}
+          release_name: Release v${{ steps.version.outputs.PACKAGE_VERSION }}
+          body: |
+            Stable release published to npm.
+            
+            Install with:
+            ```bash
+            npm install zelte@latest
+            ```
+          draft: false
+          prerelease: false

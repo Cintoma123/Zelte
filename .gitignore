@@ -48,6 +48,22 @@ pnpm-lock.yaml
 .vscode/launch.json
 .vscode/extensions.json
 
+# NPM Registry & Authentication (NEVER commit)
+.npmrc
+.npm-authtoken
+npm-authtoken
+.npm/
+*.npmrc
+
+# Build artifacts for publishing
+dist/
+build/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
 # Documentation (keep README.md, ignore all others)
 *.md
 !README.md
@@ -64,6 +80,8 @@ CHANGELOG_ZERO_CONFIG.md
 SIMPLIFICATION.md
 TESTING.md
 THREE_COMMANDS_COMPLETE.md
+mock-server.js
+test-collection.yaml
 
 
 # Git
