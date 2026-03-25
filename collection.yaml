@@ -1,0 +1,32 @@
+# Zelte API Test Collection
+# Simple, effortless API testing
+
+name: "My API Tests"
+description: "Quick API test collection"
+
+requests:
+  - name: API Health Check
+    request:
+      method: GET
+      url: /health
+    expect:
+      status: 200
+
+  - name: User Login
+    request:
+      method: POST
+      url: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        email: test@mail.com
+        password: 123456
+    expect:
+      status: 200
+
+  - name: Get User Profile
+    request:
+      method: GET
+      url: /users/me
+    expect:
+      status: 200

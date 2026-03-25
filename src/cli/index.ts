@@ -2,129 +2,124 @@
 
 /**
  * Zelte CLI Entry Point
- * Lightweight terminal-first API testing tool for backend engineers
  * 
- * Architecture:
- * - Command routing via Commander.js
- * - Global error handling with graceful exits
- * - Configurable logging with verbosity levels
- * - Multiple output formatters (table, JSON, TAP, raw)
+ * ⚡ Simple API testing tool for backend engineers
+ * 
+ * TWO CORE COMMANDS:
+ * 1. run   - Execute API tests (auto-detects configuration)
+ * 2. init  - Initialize a new Zelte project
+ * 
+ * Design Principle: Convention over Configuration
+ * - Auto-detects collection files, env files, base URLs
+ * - Zero configuration flags needed in most cases
+ * - Fast, simple, focused
  */
 
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { runCommand } from './commands/run';
-import { testCommand } from './commands/test';
-import { validateCommand } from './commands/validate';
 import { initCommand } from './commands/init';
-import { envCommand } from './commands/env';
-import { watchCommand } from './commands/watch';
-import { interactiveCommand } from './commands/interactive';
-import { logger, configureLogger } from '../utils/logger';
 import { showWelcomeScreen, shouldShowWelcome } from './welcome';
+import { logger, configureLogger } from '../utils/logger';
 
 const program = new Command();
 
-// Set up the main program
+// Configure main program
 program
   .name('zelte')
-  .description('⚡ Lightweight terminal-first API testing tool for backend engineers')
+  .description('⚡ Simple, lightweight API testing for backend engineers')
   .version('0.1.0', '-v, --version')
   .helpOption('-h, --help')
-  .option('--verbose', 'enable verbose logging')
-  .option('--debug', 'enable debug logging')
-  .option('--config <path>', 'path to configuration file')
-  .option('--no-color', 'disable colored output in all commands')
+  .option('--verbose', 'enable verbose output')
+  .option('--no-color', 'disable colored output')
   .hook('preAction', (command, actionCommand) => {
-    // Configure logger before executing any command
+    // Configure logger before executing command
     const options = actionCommand.optsWithGlobals();
     if (options.verbose) {
-      configureLogger({ verbose: true, level: 'info' });
-    }
-    if (options.debug) {
-      configureLogger({ verbose: true, level: 'debug' });
+      configureLogger();
     }
   });
 
-// Register all commands
+// Register ONLY implemented commands
 program.addCommand(runCommand);
-program.addCommand(testCommand);
-program.addCommand(validateCommand);
 program.addCommand(initCommand);
-program.addCommand(envCommand);
-program.addCommand(watchCommand);
-program.addCommand(interactiveCommand);
 
-// Configure help and usage
+// Configure help display with custom formatting
 program.configureHelp({
   sortSubcommands: true,
-  subcommandTerm: (cmd) => cmd.name() + (cmd.alias() ? ' | ' + cmd.alias() : ''),
+  subcommandTerm: (cmd) => chalk.blue(cmd.name()),
 });
 
-// Custom help text
-program.on('--help', () => {
-  console.log('');
-  console.log('Examples:');
-  console.log('');
-  console.log('  # Run tests from a YAML collection');
-  console.log('  $ zelte run ./api-tests.zelte.yaml');
-  console.log('');
-  console.log('  # Run tests from a JSON collection');
-  console.log('  $ zelte run ./api-tests.zelte.json');
-  console.log('');
-  console.log('  # Run with specific environment');
-  console.log('  $ zelte run ./api-tests.zelte.yaml --env production');
-  console.log('');
-  console.log('  # Run with JSON output for CI integration');
-  console.log('  $ zelte run ./api-tests.zelte.yaml --output json > results.json');
-  console.log('');
-  console.log('  # Validate collection file');
-  console.log('  $ zelte validate ./api-tests.zelte.json');
-  console.log('');
-  console.log('  # Initialize a new project');
-  console.log('  $ zelte init');
-  console.log('');
-  console.log('Documentation: https://github.com/Cintoma123/zelte');
-  console.log('');
+// Custom formatter for the help output
+program.configureOutput({
+  writeOut: (str) => {
+    // Color the entire help output
+    let output = str;
+    
+    // Color Usage section
+    output = output.replace(/^Usage:/, chalk.bold.blue('Usage:'));
+    
+    // Color Options section
+    output = output.replace(/^Options:/m, chalk.bold.blue('Options:'));
+    
+    // Color Commands section
+    output = output.replace(/^Commands:/m, chalk.bold.blue('Commands:'));
+    
+    // Color all flag options (--flag, -f)
+    output = output.replace(/-{1,2}[a-z-]+/g, (match) => chalk.cyan(match));
+    
+    // Color command names (run, init, help)
+    output = output.replace(/(\s{2})(run|init|help)(\s{2,})/g, (match, space, cmd, space2) => {
+      return space + chalk.greenBright(cmd) + space2;
+    });
+    
+    // Color the description line
+    output = output.replace(/⚡ Simple, lightweight API testing for backend engineers/, chalk.gray('⚡ Simple, lightweight API testing for backend engineers'));
+    
+    process.stdout.write(output);
+  },
+  outputError: (str, write) => {
+    write(chalk.red(str));
+  },
 });
 
-// Global error handler
+// Error handler for exit overrides
 program.exitOverride((err) => {
   if (err.code === 'commander.help' || err.code === 'commander.version') {
     process.exit(0);
   }
   
-  logger.error('Command failed:', err.message);
+  logger.error('Command error:', err.message);
   process.exit(1);
 });
 
-// Handle no command provided
-program.configureOutput({
-  outputError: (str, write) => {
-    write(chalk.red('Error: ' + str));
-  },
+// Custom help text with focused examples
+program.on('--help', () => {
+  console.log('');
+  console.log(chalk.bold.blue('━━━ 🚀 Quick Start ━━━'));
+  console.log('');
+  console.log(chalk.gray('  ') + chalk.blue('$') + chalk.cyan(' zelte run') + chalk.gray('                   # Run all tests'));
+  console.log(chalk.gray('  ') + chalk.blue('$') + chalk.cyan(' zelte init') + chalk.gray('                   # Create new project'));
+  console.log('');
+  console.log(chalk.bold.blue('━━━ 📚 Resources ━━━'));
+  console.log(chalk.gray('  ') + chalk.blue('https://github.com/Cintoma123/zelte'));
+  console.log('');
 });
 
-// Parse arguments and execute
+// Parse and execute
 (async () => {
   try {
-    // Check if we should show the welcome screen
+    // Check if we should show welcome screen (no command provided)
     if (shouldShowWelcome(process.argv)) {
-      showWelcomeScreen(program);
+      await showWelcomeScreen(program);
       process.exit(0);
     }
 
     await program.parseAsync();
-
-    // If no command provided, show help (fallback)
-    if (!process.argv.slice(2).length) {
-      program.outputHelp();
-      process.exit(0);
-    }
   } catch (error) {
     if (error instanceof Error) {
       logger.error('Fatal error:', error.message);
-      if (error.stack) {
+      if (error.stack && process.env.DEBUG) {
         logger.debug(error.stack);
       }
     }

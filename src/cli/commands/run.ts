@@ -4,52 +4,62 @@ import { logger } from '../../utils/logger';
 import { createFormatter } from '../output/formatter';
 import { createReportAggregator } from '../output/report';
 import { createAndRunTests } from '../../core/runner';
-import { createTestResultsStorage } from '../../utils/storage';
-import { createMetricsCollector } from '../../utils/metrics';
+import { autoDetectConfig, autoDetectCollectionPath } from '../../config/auto-detect';
+import { loadCollection } from '../../config/loader';
+import { Collection } from '../../types/index';
 
 export const runCommand = new Command('run')
-  .description('Execute API requests from a collection file (YAML or JSON)')
-  .argument('[collection]', 'path to collection file (*.yaml or *.json)', 'collection.yaml')
-  .option('-e, --env <name>', 'environment to use')
-  .option('-o, --output <format>', 'output format (table, json, tap, raw)', 'table')
-  .option('--timeout <ms>', 'request timeout in milliseconds', '30000')
-  .option('--parallel', 'enable parallel request execution')
-  .option('--serial', 'run tests sequentially (opposite of --parallel)')
-  .option('--filter <pattern>', 'regex pattern to filter tests by name or id')
-  .option('-v, --verbose', 'verbose output with request/response details')
-  .option('--metrics', 'show detailed performance metrics')
-  .option('--no-colors', 'disable colored output')
-  .option('--save-results <path>', 'save results to file')
-  .action(async (collectionPath: string, options: any) => {
+  .description('Execute API requests from a collection file (auto-detects configuration)')
+  .argument('[collection]', 'path to collection file (auto-detected if omitted)')
+  .action(async (collectionPath: string | undefined) => {
     try {
-      // Configure logger based on options
-      if (options.verbose) {
-        logger.setVerbose(true);
+      logger.info('🚀 Zelte - Zero-Config API Testing');
+
+      // STEP 1: Auto-detect configuration
+      logger.info('📍 Auto-detecting configuration...');
+      const autoConfig = await autoDetectConfig(process.cwd());
+
+      if (autoConfig.configPath) {
+        logger.debug(`✓ Config: ${autoConfig.configPath}`);
       }
+      if (autoConfig.envPath) {
+        logger.debug(`✓ Environment: ${autoConfig.envPath}`);
+      }
+      logger.debug(`✓ Base URL: ${autoConfig.baseUrl}`);
 
-      logger.info(`Running collection: ${collectionPath}`);
-      logger.debug('Options:', options);
+      // STEP 2: Auto-detect collection file if not provided
+      const finalCollectionPath = collectionPath || autoDetectCollectionPath(undefined, process.cwd());
+      logger.info(`📂 Collection: ${finalCollectionPath}`);
 
-      // Parse timeout
-      const timeout = options.timeout ? parseInt(options.timeout, 10) : 30000;
+      // STEP 3: Load collection
+      const collection = loadCollection(finalCollectionPath);
+
+      // STEP 4: Merge variables from auto-detected config
+      const variables = {
+        ...autoConfig.variables,
+        ...(collection.variables || {}),
+      };
+
+      // Default timeout
+      const timeout = 30000;
 
       // Run tests
-      const testResults = await createAndRunTests(collectionPath, {
-        collectionPath,
-        envName: options.env,
-        verbose: options.verbose || false,
-        parallel: options.parallel ?? !options.serial,
+      const testCount = (collection.requests || collection.tests || []).length;
+      logger.info(`⚡ Running ${testCount} tests...`);
+      const testResults = await createAndRunTests(finalCollectionPath, {
+        collectionPath: finalCollectionPath,
+        variables,
+        baseUrl: autoConfig.baseUrl ?? undefined,
+        verbose: true,
+        parallel: true,
         timeout,
-        filter: options.filter,
-        outputFormat: (options.output as any) || 'table',
-        saveResults: options.saveResults,
-        noColors: !options.colors,
+        outputFormat: 'table',
       });
 
-      // Format output
-      const formatter = createFormatter(options.output as any, {
-        verbose: options.verbose,
-        colors: options.colors !== false,
+      // Format output (always table format)
+      const formatter = createFormatter('table', {
+        verbose: true,
+        colors: true,
       });
 
       const aggregator = createReportAggregator();
@@ -69,37 +79,17 @@ export const runCommand = new Command('run')
       }
 
       const report = aggregator.getSummary();
-      report.name = 'Collection: ' + collectionPath;
+      report.name = 'Collection: ' + finalCollectionPath;
 
       const output = formatter.format(report);
       console.log(output);
 
-      // Show performance metrics
-      const metricsCollector = createMetricsCollector();
-      metricsCollector.addResults(testResults.results);
-      if (options.verbose || options.metrics) {
-        console.log(metricsCollector.generateReport());
-      }
-
-      // Save results if requested
-      if (options.saveResults) {
-        const storage = createTestResultsStorage();
-        try {
-          await storage.saveToFile(options.saveResults, testResults.results);
-        } catch (error) {
-          logger.error(
-            'Failed to save results:',
-            error instanceof Error ? error.message : String(error)
-          );
-        }
-      }
-
       // Exit with appropriate code
       const exitCode = aggregator.hasFailures() ? 1 : 0;
       if (exitCode !== 0) {
-        logger.error(`Collection run failed (${aggregator.getFailures().length} failures)`);
+        logger.error(`✗ Collection run failed (${aggregator.getFailures().length} failures)`);
       } else {
-        logger.success('Collection execution completed successfully');
+        logger.success('✓ All tests passed!');
       }
 
       process.exit(exitCode);

@@ -19,8 +19,8 @@ tests:
         username: ${API_USERNAME}
         password: ${API_PASSWORD}
     assertions:
-      - statusCode == 200
-      - body.token != null
+      - statusCode === 200
+      - body.token !== null
     expect:
       variables:
         auth_token: data.token
@@ -35,8 +35,8 @@ tests:
         Authorization: Bearer ${API_BEARER_TOKEN}
         Content-Type: application/json
     assertions:
-      - statusCode == 200
-      - body.success == true
+      - statusCode === 200
+      - body.success === true
 
   - id: api-key-test
     name: API Key Authentication Test
@@ -48,8 +48,8 @@ tests:
         X-API-Key: ${API_BEARER_TOKEN}
         Content-Type: application/json
     assertions:
-      - statusCode == 200
-      - body.data != null
+      - statusCode === 200
+      - body.data !== null
 
   - id: oauth-test
     name: OAuth Authentication Test
@@ -61,8 +61,8 @@ tests:
         Content-Type: application/x-www-form-urlencoded
       body: grant_type=client_credentials&client_id=${OAUTH_CLIENT_ID}&client_secret=${OAUTH_CLIENT_SECRET}
     assertions:
-      - statusCode == 200
-      - body.access_token != null
+      - statusCode === 200
+      - body.access_token !== null
     expect:
       variables:
         oauth_token: data.access_token

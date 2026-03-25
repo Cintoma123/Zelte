@@ -1,0 +1,142 @@
+version: '1.0'
+name: GraphQL API - Shorthand Syntax
+description: GraphQL testing with clean, simple syntax
+
+variables:
+  baseUrl: http://localhost:3000/graphql
+  userId: 1
+
+graphql:
+  - id: user-query
+    name: Fetch user by ID
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          user(id: "${userId}") {
+            id
+            name
+            email
+            createdAt
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.data.user.id === "${userId}"
+      - body.data.user.name !== null
+      - body.errors === undefined
+
+  - id: users-list
+    name: List all users
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          users(limit: 10) {
+            id
+            name
+            email
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - Array.isArray(body.data.users)
+      - body.data.users.length > 0
+
+  - id: create-user-mutation
+    name: Create new user mutation
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          createUser(
+            input: {
+              email: "graphql@test.com"
+              password: "SecurePass123"
+              name: "GraphQL User"
+            }
+          ) {
+            id
+            email
+            createdAt
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.data.createUser.id !== null
+      - body.data.createUser.email === "graphql@test.com"
+      - body.errors === undefined
+
+  - id: update-user-mutation
+    name: Update user via mutation
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          updateUser(id: "${userId}", input: { name: "Updated Name" }) {
+            id
+            name
+            updatedAt
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.data.updateUser.name === "Updated Name"
+      - body.data.updateUser.updatedAt !== null
+
+  - id: delete-user-mutation
+    name: Delete user mutation
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          deleteUser(id: "${userId}") {
+            success
+            message
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.data.deleteUser.success === true
+
+  # Shorthand for error handling
+  - id: invalid-query
+    name: Invalid query error handling
+    request:
+      method: POST
+      url: ${baseUrl}
+      body: |
+        {
+          invalidField {
+            id
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.errors !== undefined
+      - Array.isArray(body.errors)
+      - body.errors.length > 0
+
+notes: |
+  GRAPHQL SHORTHAND REFERENCE:
+  
+  ✓ method: POST                   # GraphQL is always POST
+  ✓ url: endpoint                  # GraphQL endpoint
+  ✓ body: string with query/mutation
+  ✓ assertions: JavaScript expressions
+  
+  STATUS CODES:
+  - 200: Always returned for GraphQL (even with errors)
+  - Check body.errors for error details
+  - Check body.data for successful response
+  
+  TYPICAL ASSERTIONS:
+  - statusCode === 200 (for GraphQL)
+  - body.errors === undefined (no errors)
+  - body.data !== null (has response)
+  - body.data.field === value (validate data)

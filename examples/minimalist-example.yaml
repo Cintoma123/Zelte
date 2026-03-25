@@ -1,0 +1,56 @@
+version: "1.0"
+name: "Simple Login Test"
+description: "Minimal example: Just the essentials"
+
+variables:
+  baseUrl: "http://localhost:3000"
+
+# The simplest possible test collection
+tests:
+  - id: login
+    name: POST /auth/login
+    request:
+      method: POST
+      url: ${baseUrl}/auth/login
+      body:
+        email: test@mail.com
+        password: 123456
+    assertions:
+      - statusCode === 200
+      - body.token !== null
+
+  - id: get-profile
+    name: GET /users/me
+    request:
+      method: GET
+      url: ${baseUrl}/users/me
+    assertions:
+      - statusCode === 200
+
+  - id: create-user
+    name: POST /auth/register
+    request:
+      method: POST
+      url: ${baseUrl}/auth/register
+      body:
+        email: newuser@test.com
+        password: SecurePass123
+    assertions:
+      - statusCode === 201
+
+  - id: list-users
+    name: GET /users
+    request:
+      method: GET
+      url: ${baseUrl}/users
+    assertions:
+      - statusCode === 200
+      - Array.isArray(body)
+
+  - id: delete-user
+    name: DELETE /users/1
+    request:
+      method: DELETE
+      url: ${baseUrl}/users/1
+    assertions:
+      - statusCode === 200 || statusCode === 204

@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "variables": {
+    "API_KEY": "your-api-key-here",
+    "DEFAULT_TIMEOUT": 30000,
+    "ENVIRONMENT": "development"
+  },
+  "timeout": 30000,
+  "failFast": false,
+  "parallel": true
+}

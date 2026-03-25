@@ -1,0 +1,79 @@
+version: '1.0'
+name: Auth API - Shorthand Syntax
+description: Quick API testing with compact shorthand syntax
+
+variables:
+  baseUrl: http://localhost:3000
+  testEmail: test@mail.com
+  testPassword: 123456
+
+tests:
+  # Shorthand: Simple POST request with expected status
+  - id: auth-login
+    name: Login with shorthand
+    request:
+      method: POST
+      url: ${baseUrl}/auth/login
+      body:
+        email: ${testEmail}
+        password: ${testPassword}
+    assertions:
+      - statusCode === 200
+      - body.token !== null
+
+  # Shorthand: GET with multiple status code expectations
+  - id: get-user
+    name: Get user profile
+    request:
+      method: GET
+      url: ${baseUrl}/users/1
+      headers:
+        Authorization: Bearer ${token}
+    assertions:
+      - statusCode === 200 || statusCode === 304
+      - body.id === 1
+
+  # Shorthand: POST with body and validation
+  - id: create-user
+    name: Create new user
+    request:
+      method: POST
+      url: ${baseUrl}/auth/register
+      body:
+        email: newuser@test.com
+        password: SecurePass123
+        name: New User
+    assertions:
+      - statusCode === 201
+      - body.id !== null
+      - body.email === "newuser@test.com"
+
+  # Shorthand: PUT to update
+  - id: update-user
+    name: Update user profile
+    request:
+      method: PUT
+      url: ${baseUrl}/users/1
+      body:
+        name: Updated Name
+        bio: Test user
+    assertions:
+      - statusCode === 200
+      - body.name === "Updated Name"
+
+  # Shorthand: DELETE
+  - id: delete-user
+    name: Delete user account
+    request:
+      method: DELETE
+      url: ${baseUrl}/users/1
+    assertions:
+      - statusCode === 200 || statusCode === 204
+
+# Quick reference for shorthand:
+# POST /endpoint        - Method and path
+# body: {...}          - Request body
+# expect 200           - Expected status code
+# assert expression    - Custom assertion
+# headers: {...}       - Custom headers
+# query: {...}         - Query parameters

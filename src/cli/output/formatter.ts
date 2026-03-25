@@ -1,6 +1,6 @@
 /**
  * Output Formatter Module
- * Handles formatting of test results in various formats
+ * Simplified to human-readable table and machine-readable JSON
  */
 
 import chalk from 'chalk';
@@ -8,7 +8,7 @@ import chalk from 'chalk';
 export interface TestResult {
   id: string;
   name: string;
-  status: 'passed' | 'failed' | 'skipped' | 'pending';
+  status: 'passed' | 'failed' | 'skipped' | 'error';
   duration: number;
   error?: string;
   assertions?: {
@@ -57,6 +57,8 @@ export abstract class BaseFormatter {
         return chalk.green('✓ ' + status);
       case 'failed':
       case 'FAILED':
+      case 'error':
+      case 'ERROR':
         return chalk.red('✗ ' + status);
       case 'skipped':
       case 'SKIPPED':
@@ -75,7 +77,7 @@ export abstract class BaseFormatter {
 }
 
 /**
- * Pretty Table Formatter
+ * Pretty Table Formatter (Default)
  * Outputs colorized table format suitable for terminal
  */
 export class TableFormatter extends BaseFormatter {
@@ -149,7 +151,7 @@ export class TableFormatter extends BaseFormatter {
 
 /**
  * JSON Formatter
- * Outputs machine-readable JSON format
+ * Outputs machine-readable JSON format for CI/scripting
  */
 export class JsonFormatter extends BaseFormatter {
   format(result: CollectionResult): string {
@@ -158,57 +160,15 @@ export class JsonFormatter extends BaseFormatter {
 }
 
 /**
- * TAP (Test Anything Protocol) Formatter
- * Outputs TAP format for CI integration
- */
-export class TapFormatter extends BaseFormatter {
-  format(result: CollectionResult): string {
-    const lines: string[] = [];
-    
-    lines.push(`1..${result.tests.length}`);
-    
-    let testNumber = 1;
-    for (const test of result.tests) {
-      const status = test.status === 'passed' ? 'ok' : 'not ok';
-      lines.push(`${status} ${testNumber} - ${test.name}`);
-      
-      if (test.status === 'failed' && test.error) {
-        lines.push(`  ---`);
-        lines.push(`  message: ${test.error}`);
-        lines.push(`  ...`);
-      }
-      
-      testNumber++;
-    }
-    
-    return lines.join('\n');
-  }
-}
-
-/**
- * Raw JSON Formatter
- * Outputs compact JSON (minimal whitespace)
- */
-export class RawFormatter extends BaseFormatter {
-  format(result: CollectionResult): string {
-    return JSON.stringify(result);
-  }
-}
-
-/**
  * Formatter Factory
  */
 export function createFormatter(
-  format: 'table' | 'json' | 'tap' | 'raw' = 'table',
+  format: 'table' | 'json' = 'table',
   options: FormatterOptions = {}
 ): BaseFormatter {
   switch (format) {
     case 'json':
       return new JsonFormatter(options);
-    case 'tap':
-      return new TapFormatter(options);
-    case 'raw':
-      return new RawFormatter(options);
     case 'table':
     default:
       return new TableFormatter(options);

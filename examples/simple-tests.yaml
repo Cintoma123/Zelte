@@ -1,0 +1,67 @@
+# Simple Beta-Friendly Test Example
+# Zero boilerplate, super clean
+
+name: Simple API Tests
+
+requests:
+  - name: POST /auth/login
+    request:
+      method: POST
+      url: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        email: test@mail.com
+        password: 123456
+    expect:
+      status: 200
+
+  - name: GET /api/profile
+    request:
+      method: GET
+      url: /api/profile
+      headers:
+        Authorization: "Bearer ${API_TOKEN}"
+    expect:
+      status: 200
+
+  - name: PUT /api/profile
+    request:
+      method: PUT
+      url: /api/profile
+      headers:
+        Content-Type: application/json
+      body:
+        name: John Doe
+        bio: Software Developer
+    expect:
+      status: 200
+
+  - name: GET /api/users
+    request:
+      method: GET
+      url: /api/users
+      headers:
+        Authorization: "Bearer ${ADMIN_TOKEN}"
+    expect:
+      status: 200
+
+  - name: POST /api/projects
+    request:
+      method: POST
+      url: /api/projects
+      headers:
+        Content-Type: application/json
+      body:
+        title: "My Amazing Project"
+        description: "A test project"
+        privacy: "private"
+    expect:
+      status: 201
+
+  - name: DELETE /api/projects/123
+    request:
+      method: DELETE
+      url: /api/projects/12345
+    expect:
+      status: 204

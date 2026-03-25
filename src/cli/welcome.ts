@@ -15,6 +15,7 @@ import boxen from 'boxen';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 import { Command } from 'commander';
+import ora from 'ora';
 
 // Professional color palette for CLI
 const colors = {
@@ -32,7 +33,7 @@ const logoConfig: figlet.FigletOptions = {
   font: 'ANSI Shadow',   // Professional, readable font
   horizontalLayout: 'default',
   verticalLayout: 'default',
-  width: 80,
+  width: Math.min(process.stdout.columns || 80, 120), // Responsive width, max 120
   whitespaceBreak: true
 };
 
@@ -84,7 +85,7 @@ function generateQuickStart(): string {
 
   return boxen(exampleBlocks, {
     padding: 1,
-    margin: 1,
+    margin: Math.max(1, Math.floor((process.stdout.columns || 80) / 40)), // Responsive margin
     borderStyle: 'round',
     borderColor: colors.primary,
     backgroundColor: '#1a1a1a'
@@ -105,7 +106,7 @@ function generateCommands(commands: readonly Command[]): string {
   
   return boxen(`${header}${commandList}`, {
     padding: 1,
-    margin: 1,
+    margin: Math.max(1, Math.floor((process.stdout.columns || 80) / 40)),
     borderStyle: 'single',
     borderColor: colors.secondary
   });
@@ -123,7 +124,7 @@ function generateFooter(): string {
 
   return boxen(footerText, {
     padding: 1,
-    margin: 1,
+    margin: Math.max(1, Math.floor((process.stdout.columns || 80) / 40)),
     borderStyle: 'double',
     borderColor: colors.warning
   });
@@ -132,18 +133,29 @@ function generateFooter(): string {
 /**
  * Display the premium welcome screen
  */
-export function showWelcomeScreen(program: Command): void {
-  // Clear screen and add top padding
-  console.clear();
-  
-  // Generate all components
-  const logo = generateLogo();
-  const quickStart = generateQuickStart();
-  const commands = generateCommands(program.commands as readonly Command[]);
-  const footer = generateFooter();
+export function showWelcomeScreen(program: Command): Promise<void> {
+  return new Promise((resolve) => {
+    // Clear screen and add top padding
+    console.clear();
+    
+    // Show loading spinner for better responsiveness feel
+    const spinner = ora({
+      text: chalk.hex(colors.primary)('Initializing Zelte...'),
+      spinner: 'dots'
+    }).start();
+    
+    // Simulate brief loading for responsiveness
+    setTimeout(() => {
+      spinner.succeed(chalk.hex(colors.success)('Welcome to Zelte!'));
+      
+      // Generate all components
+      const logo = generateLogo();
+      const quickStart = generateQuickStart();
+      const commands = generateCommands(program.commands as readonly Command[]);
+      const footer = generateFooter();
 
-  // Build the complete welcome screen
-  const welcomeScreen = `
+      // Build the complete welcome screen
+      const welcomeScreen = `
 ${logo}
 
 ${chalk.bold.hex(colors.text)('Lightweight terminal-first API testing tool for backend engineers')}
@@ -153,9 +165,14 @@ ${commands}
 ${footer}
   `.trim();
 
-  // Display with proper spacing
-  console.log(welcomeScreen);
-  console.log('\n'); // Add extra spacing at the bottom
+      // Display with proper spacing
+      console.log(welcomeScreen);
+      console.log('\n'); // Add extra spacing at the bottom
+      
+      // Resolve promise after display
+      resolve();
+    }, 500); // 500ms delay for visual effect
+  });
 }
 
 /**

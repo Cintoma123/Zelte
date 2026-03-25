@@ -1,545 +1,250 @@
 # Assertions
 
-Assertions are the core of API testing in Zelte. They validate that your API responses meet expected conditions and help ensure your APIs work correctly.
+Assertions are the core of API testing in Zelte. They validate that your API responses meet expected conditions using simple JavaScript expressions.
 
 ## Overview
 
-Assertions in Zelte are simple string expressions that evaluate to true or false. They validate various aspects of HTTP responses including status codes, response times, headers, and response body content.
+Assertions in Zelte are JavaScript expressions that evaluate to `true` or `false`. They validate various aspects of HTTP responses including status codes, response times, headers, and response body content.
 
 ## Assertion Syntax
 
-Assertions use a simple expression syntax:
+Assertions are JavaScript expressions evaluated against the HTTP response:
 
 ```yaml
 assertions:
-  - "expression"
-  - "another expression"
-```
-
-### Basic Assertion Structure
-
-```yaml
-assertions:
-  - status == 200
-  - body.id == 123
+  - statusCode === 200
+  - body.id !== null
   - time < 1000
 ```
 
-## Built-in Accessors
+## Available Context Variables
 
-Zelte provides several built-in accessors to reference different parts of the HTTP response:
-
-### Status Code (`status`)
-
-Access the HTTP status code:
+### statusCode
+The HTTP status code of the response:
 
 ```yaml
 assertions:
-  - status == 200
-  - status != 404
-  - status > 200
-  - status < 500
+  - statusCode === 200              # Exact match
+  - statusCode !== 404              # Not equal
+  - statusCode >= 200               # Greater than or equal
+  - statusCode < 400                # Status is 2xx or 3xx
 ```
 
-### Response Time (`time`)
-
-Access the response time in milliseconds:
+### body
+The parsed response body (JSON object or string):
 
 ```yaml
 assertions:
-  - time < 1000      # Response under 1 second
-  - time > 100       # Response over 100ms
-  - time >= 50       # Response at least 50ms
+  - body.id !== null                # Field exists
+  - body.email === "john@example.com"  # Exact match
+  - body.success === true           # Boolean check
+  - body.user.name !== null         # Nested property
+  - body.items.length > 0           # Array length
+  - body.message.includes("error")  # String method
 ```
 
-### Response Body (`body`)
-
-Access the parsed response body (JSON or string):
-
-```yaml
-# JSON response
-assertions:
-  - body.id == 123
-  - body.name == "John Doe"
-  - body.success == true
-  - body.users.length > 0
-
-# Nested properties
-assertions:
-  - body.user.profile.email == "john@example.com"
-  - body.data.results[0].id == 1
-```
-
-### Response Headers (`headers`)
-
-Access response headers:
+### time
+The response time in milliseconds:
 
 ```yaml
 assertions:
-  - headers.content-type == "application/json"
-  - headers.authorization exists
-  - headers.x-rate-limit contains "1000"
-  - headers.etag != null
+  - time < 1000                     # Under 1 second
+  - time > 100                      # Over 100ms
+  - time >= 50                      # At least 50ms
 ```
 
-### Environment Variables (`env`)
-
-Access environment variables:
+### headers
+Response headers (normalized to lowercase keys):
 
 ```yaml
 assertions:
-  - body.api_version == env.API_VERSION
-  - body.environment == env.NODE_ENV
+  - headers['content-type'] === "application/json"
+  - headers['authorization'] !== null
+  - headers['x-rate-limit'].includes("1000")
 ```
 
-## Comparison Operators
-
-### Equality Operators
-
-- `==` - Equal to
-- `!=` - Not equal to
+### data
+Alias for `body` (for parsed JSON responses):
 
 ```yaml
 assertions:
-  - status == 200
-  - body.type != "error"
-  - headers.content-type == "application/json"
+  - data.userId !== null            # Same as body.userId
+  - data.email.includes("@")        # String method
 ```
+
+## JavaScript Expressions
+
+Since assertions are JavaScript expressions, you can use:
 
 ### Comparison Operators
+```yaml
+assertions:
+  - statusCode === 200              # Strict equality
+  - statusCode !== 404              # Strict inequality
+  - body.count > 10
+  - body.count < 100
+  - body.count >= 5
+  - body.count <= 50
+```
 
-- `>` - Greater than
-- `<` - Less than
-- `>=` - Greater than or equal to
-- `<=` - Less than or equal to
+### String Methods
+```yaml
+assertions:
+  - body.message.includes("success")
+  - body.email.includes("@")
+  - body.url.startsWith("https://")
+  - body.name.length > 0
+  - body.message.toLowerCase() === "error"
+```
+
+### Array Methods
+```yaml
+assertions:
+  - body.items.length > 0
+  - body.items[0].id !== null
+  - body.tags.includes("important")
+  - body.users.some(u => u.active)
+```
+
+### Logical Operations
+```yaml
+assertions:
+  - statusCode === 200 && body.id !== null
+  - statusCode === 404 || statusCode === 400
+  - body.active === true && body.verified === true
+```
+
+### Type Checks
+```yaml
+assertions:
+  - typeof body.id === "number"
+  - Array.isArray(body.items)
+  - body.email !== null && body.email !== undefined
+```
+
+## Helper Functions
+
+### get(object, path)
+Access deeply nested properties:
 
 ```yaml
 assertions:
-  - time < 1000
-  - body.users.length >= 1
-  - status >= 200
-  - status <= 500
+  - get(body, 'user.profile.email') === "john@example.com"
+  - get(data, 'items.0.id') !== null
 ```
 
-## String Operations
-
-### Contains
-
-Check if a string contains a substring:
+### accessArray(array, index)
+Safe array access:
 
 ```yaml
 assertions:
-  - body.message contains "success"
-  - body.error !contains "timeout"
-  - headers.content-type contains "json"
-```
-
-### Matches (Regular Expressions)
-
-Use regular expressions for pattern matching:
-
-```yaml
-assertions:
-  - body.email matches "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-  - body.timestamp matches "^2023-"
-  - body.id !matches "^[0-9]+$"
-```
-
-## Existence Checks
-
-### Exists
-
-Check if a field exists in the response:
-
-```yaml
-assertions:
-  - body.id exists
-  - body.user.name exists
-  - headers.x-custom-header exists
-  - body.optional_field !exists
-```
-
-## Assertion Examples
-
-### Status Code Assertions
-
-```yaml
-tests:
-  - name: Successful Request
-    request:
-      method: GET
-      url: ${base_url}/users
-    assertions:
-      - status == 200
-
-  - name: Not Found
-    request:
-      method: GET
-      url: ${base_url}/users/999
-    assertions:
-      - status == 404
-
-  - name: Created Resource
-    request:
-      method: POST
-      url: ${base_url}/users
-      body:
-        name: "John Doe"
-    assertions:
-      - status == 201
-```
-
-### Response Time Assertions
-
-```yaml
-tests:
-  - name: Fast Response
-    request:
-      method: GET
-      url: ${base_url}/health
-    assertions:
-      - status == 200
-      - time < 500
-
-  - name: Performance Check
-    request:
-      method: GET
-      url: ${base_url}/large-dataset
-    assertions:
-      - status == 200
-      - time < 5000
-```
-
-### Body Assertions
-
-```yaml
-tests:
-  - name: User Data
-    request:
-      method: GET
-      url: ${base_url}/users/1
-    assertions:
-      - status == 200
-      - body.id == 1
-      - body.name == "John Doe"
-      - body.email exists
-      - body.active == true
-
-  - name: Array Response
-    request:
-      method: GET
-      url: ${base_url}/users
-    assertions:
-      - status == 200
-      - body.users exists
-      - body.users.length > 0
-      - body.users[0].id == 1
-```
-
-### Header Assertions
-
-```yaml
-tests:
-  - name: Content Type
-    request:
-      method: GET
-      url: ${base_url}/users
-    assertions:
-      - status == 200
-      - headers.content-type == "application/json"
-      - headers.cache-control exists
-
-  - name: Authentication Header
-    request:
-      method: GET
-      url: ${base_url}/protected
-    auth:
-      type: bearer
-      token: ${API_TOKEN}
-    assertions:
-      - status == 200
-      - headers.x-authenticated == "true"
-```
-
-### Complex Assertions
-
-```yaml
-tests:
-  - name: Complete User Validation
-    request:
-      method: GET
-      url: ${base_url}/users/1
-    assertions:
-      - status == 200
-      - body.id == 1
-      - body.name exists
-      - body.email matches "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-      - body.created_at exists
-      - body.updated_at >= body.created_at
-      - body.roles.length >= 1
-      - body.active == true
-```
-
-## Assertion Best Practices
-
-### 1. Be Specific
-
-Write specific assertions that validate the exact behavior you expect:
-
-```yaml
-# ❌ Vague
-assertions:
-  - status == 200
-
-# ✅ Specific
-assertions:
-  - status == 200
-  - body.user.id == 123
-  - body.user.name == "John Doe"
-  - body.user.email exists
-```
-
-### 2. Test Error Conditions
-
-Include assertions for error scenarios:
-
-```yaml
-tests:
-  - name: Invalid Request
-    request:
-      method: POST
-      url: ${base_url}/users
-      body:
-        name: ""
-    assertions:
-      - status == 400
-      - body.error exists
-      - body.error.message contains "name is required"
-```
-
-### 3. Validate Response Structure
-
-Ensure your API returns the expected data structure:
-
-```yaml
-assertions:
-  - body exists
-  - body.data exists
-  - body.data.users exists
-  - body.data.users.length >= 0
-  - body.meta exists
-  - body.meta.total >= 0
-```
-
-### 4. Use Performance Assertions
-
-Include response time assertions for critical endpoints:
-
-```yaml
-assertions:
-  - status == 200
-  - time < 1000  # Under 1 second
-```
-
-### 5. Test Edge Cases
-
-Validate boundary conditions and edge cases:
-
-```yaml
-# Empty array
-assertions:
-  - body.users exists
-  - body.users.length >= 0
-
-# Null values
-assertions:
-  - body.optional_field != null
-
-# Large values
-assertions:
-  - body.id > 0
-  - body.created_at matches "^\\d{4}-\\d{2}-\\d{2}"
+  - accessArray(body.items, 0).id === 1
+  - accessArray(body.results, 100) === undefined
 ```
 
 ## Common Assertion Patterns
 
-### API Health Check
-
+### Status Code Validation
 ```yaml
-tests:
-  - name: API Health
-    request:
-      method: GET
-      url: ${base_url}/health
-    assertions:
-      - status == 200
-      - body.status == "ok"
-      - body.timestamp exists
-      - time < 500
+assertions:
+  - statusCode === 200              # Success
+  - statusCode === 201              # Created
+  - statusCode === 400              # Bad request
+  - statusCode === 401              # Unauthorized
+  - statusCode === 404              # Not found
+  - statusCode >= 200 && statusCode < 300   # Any 2xx
 ```
 
-### CRUD Operations
-
+### Response Body Validation
 ```yaml
-# Create
-- name: Create User
-  request:
-    method: POST
-    url: ${base_url}/users
-    body:
-      name: "John Doe"
-      email: "john@example.com"
-  assertions:
-    - status == 201
-    - body.id exists
-    - body.name == "John Doe"
-    - body.email == "john@example.com"
-
-# Read
-- name: Get User
-  request:
-    method: GET
-    url: ${base_url}/users/${user_id}
-  assertions:
-    - status == 200
-    - body.id == ${user_id}
-    - body.name exists
-
-# Update
-- name: Update User
-  request:
-    method: PUT
-    url: ${base_url}/users/${user_id}
-    body:
-      name: "Jane Doe"
-      email: "jane@example.com"
-  assertions:
-    - status == 200
-    - body.name == "Jane Doe"
-    - body.email == "jane@example.com"
-
-# Delete
-- name: Delete User
-  request:
-    method: DELETE
-    url: ${base_url}/users/${user_id}
-  assertions:
-    - status == 204
+assertions:
+  - body.id !== null                # Field exists
+  - body.message !== ""             # Non-empty string
+  - body.items.length > 0           # Non-empty array
+  - body.active === true            # Boolean field
+  - body.email.includes("@")        # Email format check
 ```
 
-### Authentication Tests
-
+### Response Time Validation
 ```yaml
-tests:
-  - name: Unauthenticated Request
-    request:
-      method: GET
-      url: ${base_url}/protected
-    assertions:
-      - status == 401
-      - body.error == "Unauthorized"
-
-  - name: Valid Token
-    request:
-      method: GET
-      url: ${base_url}/protected
-    auth:
-      type: bearer
-      token: ${VALID_TOKEN}
-    assertions:
-      - status == 200
-      - body.user exists
-
-  - name: Invalid Token
-    request:
-      method: GET
-      url: ${base_url}/protected
-    auth:
-      type: bearer
-      token: "invalid-token"
-    assertions:
-      - status == 401
-      - body.error contains "invalid token"
+assertions:
+  - time < 500                      # Under 500ms
+  - time < 1000                     # Under 1 second
+  - time > 50                       # At least 50ms
 ```
 
-### Data Validation
+### JSON Array Validation
+```yaml
+assertions:
+  - Array.isArray(body.items)       # Is array
+  - body.items.length > 0           # Not empty
+  - body.items[0].id !== null       # First item exists
+  - body.items.some(item => item.active)   # At least one matches
+```
+
+## Complete Example
 
 ```yaml
+version: "1.0"
+name: User API Tests
+
 tests:
-  - name: Required Fields
+  - id: create-user
+    name: Create User
     request:
       method: POST
-      url: ${base_url}/users
+      url: http://localhost:3000/users
       body:
-        email: "test@example.com"
+        email: john@example.com
+        password: secret123
     assertions:
-      - status == 400
-      - body.errors exists
-      - body.errors.name contains "required"
+      - statusCode === 201           # Created
+      - body.id !== null             # Has ID
+      - body.email === "john@example.com"  # Email matches
+      - body.createdAt !== null      # Has timestamp
+      - time < 1000                  # Fast response
 
-  - name: Valid Email Format
+  - id: get-user
+    name: Get User
     request:
-      method: POST
-      url: ${base_url}/users
-      body:
-        name: "John Doe"
-        email: "invalid-email"
+      method: GET
+      url: http://localhost:3000/users/123
     assertions:
-      - status == 400
-      - body.errors.email contains "invalid format"
+      - statusCode === 200           # OK
+      - body.id === 123              # Correct ID
+      - body.email !== null          # Has email
+      - typeof body.age === "number" || body.age === null  # Age is number or null
+      - time < 500                   # Very fast
 
-  - name: Unique Email
+  - id: list-users
+    name: List Users
     request:
-      method: POST
-      url: ${base_url}/users
-      body:
-        name: "Jane Doe"
-        email: "existing@example.com"
+      method: GET
+      url: http://localhost:3000/users
     assertions:
-      - status == 409
-      - body.error contains "email already exists"
+      - statusCode === 200           # OK
+      - Array.isArray(body.items)    # Is array
+      - body.items.length > 0        # Has items
+      - body.total >= body.items.length  # Total is accurate
 ```
 
-## Troubleshooting Assertions
+## Error Handling
 
-### Common Issues
-
-1. **Field Not Found**: Ensure the field exists in the response
-2. **Type Mismatch**: Check that you're comparing compatible types
-3. **Timing Issues**: For async operations, ensure data is available
-4. **Case Sensitivity**: String comparisons are case-sensitive
-
-### Debug Tips
-
-1. **Use Verbose Mode**: Run with `--verbose` to see actual response data
-2. **Check Response Format**: Verify the response is JSON vs plain text
-3. **Test Step by Step**: Add simple assertions first, then build complexity
-4. **Use Environment Variables**: Reference extracted values correctly
-
-### Example Debug Session
+If an assertion fails, Zelte will report:
+- The assertion expression
+- Whether it passed or failed
+- Any evaluation error message
 
 ```yaml
-# Start simple
 assertions:
-  - status == 200
-
-# Add body check
-assertions:
-  - status == 200
-  - body exists
-
-# Check specific field
-assertions:
-  - status == 200
-  - body exists
-  - body.user exists
-
-# Check nested field
-assertions:
-  - status == 200
-  - body exists
-  - body.user exists
-  - body.user.name == "John Doe"
+  - statusCode === 200              # If false, reported as failed
+  - body.user.name.includes("John") # If body.user is null, error is raised
 ```
 
-By following these patterns and best practices, you can create robust, reliable assertions that thoroughly validate your API behavior and catch issues early in your development process.
+## Tips & Best Practices
+
+1. **Use strict equality**: Use `===` and `!==` instead of `==` and `!=`
+2. **Check for existence**: Use `!== null` to verify a field exists
+3. **Combine assertions**: Use logical operators (`&&`, `||`) for complex checks
+4. **Keep assertions readable**: Break down complex expressions for clarity
+5. **Use helper functions**: Use `get()` for deeply nested properties

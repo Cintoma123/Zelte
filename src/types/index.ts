@@ -1,23 +1,29 @@
 /**
- * Global Type Definitions
- * Core data structures used throughout Zelte
+ * Global Type Definitions - SIMPLIFIED
+ * Single source of truth for all types across the app
+ * 
+ * DESIGN: Flat structures, no deep nesting, JSON-friendly
+ * PATTERN: Union types for flexibility, optional fields for extensibility
  */
 
-/**
- * Collection Format Version
- */
 export const COLLECTION_VERSION = '1.0';
 
-/**
- * HTTP Methods supported
- */
+// ============================================================================
+// PRIMITIVES & ENUMS
+// ============================================================================
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+export type AuthType = 'bearer' | 'api-key' | 'basic' | 'inherit-from-env';
+export type TestStatus = 'passed' | 'failed' | 'skipped' | 'error';
+
+// ============================================================================
+// CONFIGURATION & SCHEMA
+// ============================================================================
 
 /**
- * Authentication Types
+ * Authentication config
+ * Supports multiple auth methods in a single clean interface
  */
-export type AuthType = 'bearer' | 'api-key' | 'basic' | 'inherit-from-env';
-
 export interface AuthConfig {
   type: AuthType;
   token?: string;
@@ -28,41 +34,96 @@ export interface AuthConfig {
 }
 
 /**
- * Request Headers
+ * Request type - works for both REST and GraphQL
+ * REST example: { method: 'POST', url: '...', body: {...} }
+ * GraphQL example: { endpoint: '...', query: '...', variables: {...} }
  */
-export type Headers = Record<string, string | string[]>;
+export interface HttpRequest {
+  method?: HttpMethod;
+  url?: string;
+  headers?: Record<string, string>;
+  body?: string | Record<string, any> | null;
+  endpoint?: string;
+  query?: string;
+  variables?: Record<string, any>;
+}
 
 /**
- * Request Body (can be string, object, or binary)
+ * Assertion: can be simple string or detailed object
  */
-export type RequestBody = string | Record<string, any> | Buffer | null;
+export type Assertion = string | { assert: string; name?: string; message?: string };
 
 /**
- * HTTP Response
+ * Test case - unified for REST and GraphQL
+ * SIMPLIFIED FORMAT: Cleaner, less boilerplate
+ * 
+ * Example:
+ * {
+ *   name: "Login Test",
+ *   request: {
+ *     method: "POST",
+ *     url: "/auth/login",
+ *     body: { email: "test@mail.com", password: "123456" }
+ *   },
+ *   expect: { status: 200 }
+ * }
+ */
+export interface TestCase {
+  id?: string; // Optional: auto-generated if not provided
+  name: string;
+  description?: string;
+  skip?: boolean;
+  request: HttpRequest;
+  auth?: AuthConfig;
+  timeout?: number;
+  assertions?: Assertion[]; // Optional: use expect.status instead
+  expect?: {
+    status?: number; // Simple status code expectation
+    variables?: Record<string, string>;
+  };
+}
+
+/**
+ * Backward compat alias for GraphQL tests (same structure)
+ */
+export type GraphQLTestCase = TestCase;
+
+/**
+ * Collection: root grouping of tests
+ */
+export interface Collection {
+  version?: string;
+  name: string;
+  description?: string;
+  baseUrl?: string;
+  variables?: Record<string, any>;
+  requests?: TestCase[]; // alias for tests
+  tests?: TestCase[];
+}
+
+/**
+ * Variables can be any type
+ */
+export type Variables = Record<string, any>;
+
+// ============================================================================
+// EXECUTION & RESULTS
+// ============================================================================
+
+/**
+ * HTTP Response after execution
  */
 export interface HttpResponse {
   statusCode: number;
   headers: Record<string, string | string[]>;
   body: string;
-  data?: any; // Parsed JSON body
-  duration: number; // milliseconds
-  timestamp: number; // Unix timestamp
+  data?: any;
+  duration: number;
+  timestamp: number;
 }
 
 /**
- * HTTP Request
- */
-export interface HttpRequest {
-  method: HttpMethod;
-  url: string;
-  headers?: Headers;
-  body?: RequestBody;
-  auth?: AuthConfig;
-  timeout?: number;
-}
-
-/**
- * Assertion Result
+ * Single assertion evaluation result
  */
 export interface AssertionResult {
   name: string;
@@ -73,12 +134,7 @@ export interface AssertionResult {
 }
 
 /**
- * Test Status
- */
-export type TestStatus = 'passed' | 'failed' | 'skipped' | 'pending';
-
-/**
- * Test Execution Result
+ * Complete execution result for a test
  */
 export interface TestExecution {
   id: string;
@@ -93,103 +149,27 @@ export interface TestExecution {
   endTime: number;
 }
 
-/**
- * Collection Variables
- */
-export interface Variables extends Record<string, string | number | boolean | null> {}
+// ============================================================================
+// RUNTIME CONFIGURATION
+// ============================================================================
+
+export type Headers = Record<string, string | string[]>;
+
+export type RequestBody = string | Record<string, any> | Buffer | null;
 
 /**
- * Test Case (REST)
- */
-export interface TestCase {
-  id: string;
-  name: string;
-  description?: string;
-  skip?: boolean;
-  request: {
-    method: HttpMethod;
-    url: string;
-    headers?: Headers;
-    body?: RequestBody;
-  };
-  auth?: AuthConfig;
-  timeout?: number;
-  assertions: string[] | AssertionDefinition[];
-  expect?: {
-    variables?: Record<string, string>;
-  };
-}
-
-/**
- * GraphQL Test Case
- */
-export interface GraphQLTestCase {
-  id: string;
-  name: string;
-  description?: string;
-  skip?: boolean;
-  endpoint: string;
-  method?: HttpMethod;
-  query: string;
-  variables?: Record<string, any>;
-  auth?: AuthConfig;
-  timeout?: number;
-  assertions: string[] | AssertionDefinition[];
-  expect?: {
-    variables?: Record<string, string>;
-  };
-}
-
-/**
- * Assertion Definition
- */
-export interface AssertionDefinition {
-  name?: string;
-  assert: string;
-  message?: string;
-}
-
-/**
- * Collection Definition
- */
-export interface Collection {
-  version: string;
-  name: string;
-  description?: string;
-  variables?: Variables;
-  tests?: TestCase[];
-  graphql?: GraphQLTestCase[];
-}
-
-/**
- * Test Execution Context
- */
-export interface ExecutionContext {
-  variables: Variables;
-  previousResults: TestExecution[];
-  currentTest?: TestExecution;
-}
-
-/**
- * Runner Configuration
+ * CLI runner configuration
  */
 export interface RunnerConfig {
   collectionPath: string;
   envName?: string;
+  variables?: Record<string, string>;
+  baseUrl?: string;
   verbose?: boolean;
   parallel?: boolean;
   timeout?: number;
-  filter?: string; // regex pattern
-  outputFormat?: 'table' | 'json' | 'tap' | 'raw';
+  filter?: string;
+  outputFormat?: 'table' | 'json';
   saveResults?: string;
   noColors?: boolean;
-}
-
-/**
- * Config Loader Options
- */
-export interface ConfigLoaderOptions {
-  envFile?: string;
-  envName?: string;
-  verbose?: boolean;
 }

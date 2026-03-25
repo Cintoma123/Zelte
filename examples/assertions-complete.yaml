@@ -1,0 +1,242 @@
+version: "1.0"
+name: Assertion Examples
+description: Comprehensive examples of JavaScript-based assertions in Zelte
+
+variables:
+  baseUrl: "http://localhost:3000"
+  timeout: 5000
+
+tests:
+  # Status Code Assertions
+  - id: simple-status
+    name: Simple Status Code Check
+    request:
+      method: GET
+      url: "${baseUrl}/health"
+    assertions:
+      - statusCode === 200
+
+  # Body Property Assertions
+  - id: body-properties
+    name: Check Response Body Properties
+    request:
+      method: GET
+      url: "${baseUrl}/users/1"
+    assertions:
+      - statusCode === 200
+      - body.id !== null
+      - body.email !== undefined
+      - body.name.length > 0
+      - typeof body.age === "number"
+
+  # Array Assertions
+  - id: array-assertions
+    name: Validate Array Responses
+    request:
+      method: GET
+      url: "${baseUrl}/users"
+    assertions:
+      - statusCode === 200
+      - Array.isArray(body.items)
+      - body.items.length > 0
+      - body.items[0].id !== null
+
+  # String Method Assertions
+  - id: string-methods
+    name: String Method Assertions
+    request:
+      method: POST
+      url: "${baseUrl}/search"
+      body:
+        query: "test"
+    assertions:
+      - statusCode === 200
+      - body.query.includes("test")
+      - body.query.toLowerCase() === "test"
+      - body.result.startsWith("Found")
+      - body.message.endsWith("results")
+
+  # Comparison Operators
+  - id: comparison-operators
+    name: Numeric Comparisons
+    request:
+      method: GET
+      url: "${baseUrl}/stats"
+    assertions:
+      - statusCode === 200
+      - body.count > 0
+      - body.count < 1000
+      - body.count >= 5
+      - body.active <= 50
+
+  # Response Time Assertions
+  - id: response-time
+    name: Performance Validation
+    request:
+      method: GET
+      url: "${baseUrl}/fast-endpoint"
+    assertions:
+      - statusCode === 200
+      - time < 500
+      - time > 10
+
+  # Logical Operators
+  - id: logical-operators
+    name: Complex Logical Assertions
+    request:
+      method: POST
+      url: "${baseUrl}/auth/login"
+      body:
+        email: "user@example.com"
+        password: "password123"
+    assertions:
+      - statusCode === 200 && body.token !== null
+      - body.success === true && body.user !== null
+      - statusCode === 200 || statusCode === 201
+      - body.email !== null && body.email.includes("@")
+
+  # Nested Property Access
+  - id: nested-properties
+    name: Access Nested Properties
+    request:
+      method: GET
+      url: "${baseUrl}/user/profile"
+    assertions:
+      - statusCode === 200
+      - body.user.profile.email !== null
+      - body.settings.notifications.enabled === true
+      - body.metadata.created_at !== undefined
+
+  # Array Methods
+  - id: array-methods
+    name: Advanced Array Operations
+    request:
+      method: GET
+      url: "${baseUrl}/products?filter=active"
+    assertions:
+      - statusCode === 200
+      - Array.isArray(body.products)
+      - body.products.length > 0
+      - body.products.some(p => p.inStock === true)
+      - body.products.every(p => p.price > 0)
+
+  # Type Checking
+  - id: type-checking
+    name: Validate Response Types
+    request:
+      method: GET
+      url: "${baseUrl}/data"
+    assertions:
+      - statusCode === 200
+      - typeof body.id === "number"
+      - typeof body.name === "string"
+      - Array.isArray(body.tags)
+      - typeof body.created === "object"
+
+  # Header Assertions
+  - id: header-assertions
+    name: Check Response Headers
+    request:
+      method: GET
+      url: "${baseUrl}/api/data"
+    assertions:
+      - statusCode === 200
+      - headers['content-type'].includes("application/json")
+      - headers['authorization'] !== null
+
+  # Null/Undefined Checks
+  - id: null-checks
+    name: Null and Undefined Validation
+    request:
+      method: GET
+      url: "${baseUrl}/optional-data"
+    assertions:
+      - statusCode === 200
+      - body.required !== null
+      - body.required !== undefined
+      - body.optional === null || body.optional !== null
+
+  # Empty Collection Checks
+  - id: empty-checks
+    name: Empty/Non-Empty Validation
+    request:
+      method: GET
+      url: "${baseUrl}/items"
+    assertions:
+      - statusCode === 200
+      - body.items.length >= 0
+      - body.items.length === 0 || body.items.length > 0
+      - body.items.length > 0 ? true : false
+
+  # Status Code Ranges
+  - id: status-ranges
+    name: Status Code Range Checks
+    request:
+      method: POST
+      url: "${baseUrl}/create"
+      body:
+        name: "new item"
+    assertions:
+      - statusCode >= 200 && statusCode < 300
+      - statusCode === 201 || statusCode === 200
+
+  # Complex Nested Structures
+  - id: complex-nested
+    name: Complex Nested Data Validation
+    request:
+      method: GET
+      url: "${baseUrl}/api/complex"
+    assertions:
+      - statusCode === 200
+      - body.data.results[0].id !== null
+      - body.data.results[0].metadata.tags.length > 0
+      - body.pagination.current_page < body.pagination.total_pages
+
+  # Regex Pattern Matching (using match method)
+  - id: regex-patterns
+    name: Pattern Matching with Regex
+    request:
+      method: GET
+      url: "${baseUrl}/user/email"
+    assertions:
+      - statusCode === 200
+      - /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(body.email)
+      - /^2024-/.test(body.createdDate)
+
+  # Data Type Validation
+  - id: data-validation
+    name: Complex Data Validation
+    request:
+      method: POST
+      url: "${baseUrl}/form"
+      body:
+        firstName: "John"
+        lastName: "Doe"
+        age: 30
+    assertions:
+      - statusCode === 201
+      - body.id !== null
+      - typeof body.id === "number" || typeof body.id === "string"
+      - body.created !== null && typeof body.created === "object"
+      - body.success === true
+
+# GraphQL Query Example
+graphql:
+  - id: graphql-assertions
+    name: GraphQL Assertions
+    request:
+      method: POST
+      url: "${baseUrl}/graphql"
+      body: |
+        {
+          user(id: "1") {
+            id
+            name
+            email
+          }
+        }
+    assertions:
+      - statusCode === 200
+      - body.data.user.id === "1"
+      - body.data.user.name !== null
+      - body.errors === undefined || body.errors.length === 0

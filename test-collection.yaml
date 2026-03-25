@@ -1,0 +1,68 @@
+name: "Zelte Mock API Tests"
+baseUrl: "http://localhost:8080"
+
+requests:
+  - name: "Health Check"
+    id: health-check
+    request:
+      method: GET
+      url: "http://localhost:8080/api/health"
+    expect:
+      status: 200
+
+  - name: "Login with Valid Credentials"
+    id: login-success
+    request:
+      method: POST
+      url: "http://localhost:8080/api/login"
+      body:
+        username: test-user
+        password: password123
+    expect:
+      status: 200
+    variables:
+      token: "$.token"
+
+  - name: "Get User Profile"
+    id: get-profile
+    request:
+      method: GET
+      url: "http://localhost:8080/api/profile"
+      headers:
+        Authorization: "Bearer {token}"
+    expect:
+      status: 200
+
+  - name: "Update User Profile"
+    id: update-profile
+    request:
+      method: PUT
+      url: "http://localhost:8080/api/profile"
+      headers:
+        Authorization: "Bearer {token}"
+      body:
+        name: "Updated User"
+        email: "updated@example.com"
+    expect:
+      status: 200
+
+  - name: "Delete User Profile"
+    id: delete-profile
+    request:
+      method: DELETE
+      url: "http://localhost:8080/api/profile"
+      headers:
+        Authorization: "Bearer {token}"
+    expect:
+      status: 200
+
+  - name: "Login with Invalid Credentials"
+    id: login-failure
+    request:
+      method: POST
+      url: "http://localhost:8080/api/login"
+      body:
+        username: invalid-user
+        password: wrong-password
+    expect:
+      status: 401

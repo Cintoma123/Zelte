@@ -3,11 +3,11 @@
  * Manages test execution flow and coordination
  */
 
-import { Collection, TestExecution, TestCase, RunnerConfig, GraphQLTestCase, HttpRequest, HttpMethod, Headers } from '../types/index';
+import { Collection, TestExecution, TestCase, RunnerConfig, HttpRequest, HttpMethod, Variables } from '../types/index';
 import { HttpClient } from './http/client';
 import { AssertionEngine } from './assertions/engine';
 import { VariableResolver } from './variables/resolver';
-import { ConfigLoader } from '../config/loader';
+import { loadCollection, loadEnvFile } from '../config/loader';
 import { logger } from '../utils/logger';
 import { validateCollection } from '../config/schema';
 import { RequestBuilder } from './http/request';
@@ -25,43 +25,67 @@ export class TestRunner {
   constructor(
     collection: Collection,
     config: RunnerConfig,
-    configLoader: ConfigLoader
+    envVars: Variables = {}
   ) {
     this.collection = collection;
     this.config = config;
     this.httpClient = new HttpClient(config.timeout || 30000);
     this.assertionEngine = new AssertionEngine();
 
-    // Setup variable resolver with hierarchy
-    const envVars = configLoader.getEnvironmentVariables();
+    // Setup variable resolver with hierarchy: env vars + collection vars
     const collectionVars = collection.variables || {};
-
     this.variableResolver = new VariableResolver(envVars, collectionVars);
     this.requestBuilder = new RequestBuilder(this.variableResolver);
   }
 
   /**
+   * Normalize test case: generate missing ID and convert expect.status to assertions
+   */
+  private normalizeTest(test: TestCase, index: number): TestCase {
+    const normalized: TestCase = {
+      ...test,
+      id: test.id || `test-${index}`,
+    };
+
+    // If no assertions but have expect.status, convert to assertions
+    if (!normalized.assertions || normalized.assertions.length === 0) {
+      if (normalized.expect?.status) {
+        normalized.assertions = [`statusCode === ${normalized.expect.status}`];
+      } else {
+        // Default assertion
+        normalized.assertions = [`statusCode === 200`];
+      }
+    }
+
+    return normalized;
+  }
+
+  /**
    * Execute all tests in the collection
+   * SIMPLIFIED: Detect REST vs GraphQL by request type
    */
   async run(): Promise<TestExecution[]> {
     try {
-      const restTests = this.getTestsToRun();
-      const graphqlTests = this.getGraphQLTestsToRun();
-      const allTests = [...restTests, ...graphqlTests];
+      const allTests = this.getTestsToRun();
 
       if (allTests.length === 0) {
         logger.warn('No tests found to run');
         return [];
       }
 
-      logger.info(`Running ${allTests.length} test(s)... (${restTests.length} REST, ${graphqlTests.length} GraphQL)`);
+      logger.info(`Running ${allTests.length} test(s)...`);
 
-      // Execute tests serially or in parallel
-      const testPromises = restTests.map((test) => this.runTest(test));
-      const graphqlPromises = graphqlTests.map((test) => this.runGraphQLTest(test));
-      
-      const results = await Promise.all([...testPromises, ...graphqlPromises]);
+      // Normalize tests: generate IDs and assertions
+      const normalizedTests = allTests.map((test, idx) => this.normalizeTest(test, idx));
 
+      // Execute tests (auto-detect REST vs GraphQL)
+      const testPromises = normalizedTests.map((test) => {
+        // Check if GraphQL (has endpoint) or REST (has url)
+        const isGraphQL = !!test.request.endpoint;
+        return isGraphQL ? this.runGraphQLTest(test) : this.runTest(test);
+      });
+
+      const results = await Promise.all(testPromises);
       this.results = results.filter((r) => r !== null) as TestExecution[];
 
       return this.results;
@@ -82,7 +106,7 @@ export class TestRunner {
       if (test.skip) {
         logger.info(`⊘ SKIP: ${test.name}`);
         return {
-          id: test.id,
+          id: test.id!,
           name: test.name,
           status: 'skipped',
           duration: 0,
@@ -95,14 +119,24 @@ export class TestRunner {
       logger.info(`Running: ${test.name}`);
 
       // Resolve request variables
-      const request = this.variableResolver.resolveObject(test.request);
+      let request = this.variableResolver.resolveObject(test.request);
+      logger.info(`[DEBUG] Original URL: ${request.url}`);
+
+      // Build full URL: combine baseUrl with relative path
+      if (request.url && !request.url.startsWith('http')) {
+        const baseUrl = (this.collection.baseUrl || this.config.baseUrl || 'http://localhost:3000').replace(/\/$/, '');
+        request.url = baseUrl + (request.url.startsWith('/') ? request.url : '/' + request.url);
+        logger.info(`[DEBUG] Combined URL: ${request.url}`);
+      }
+
+      logger.info(`[DEBUG] Final URL before execute: ${request.url}`);
 
       // Build and execute request
       const response = await this.httpClient.execute(request);
 
-      // Run assertions
+      // Run assertions (always defined after normalization)
       const assertions = this.assertionEngine.evaluateAssertions(
-        test.assertions,
+        test.assertions!,
         response
       );
 
@@ -118,7 +152,7 @@ export class TestRunner {
       }
 
       const result: TestExecution = {
-        id: test.id,
+        id: test.id!,
         name: test.name,
         status: passed ? 'passed' : 'failed',
         duration: response.duration,
@@ -152,7 +186,7 @@ export class TestRunner {
       logger.error(`✗ ERROR: ${test.name} - ${errorMsg}`);
 
       return {
-        id: test.id,
+        id: test.id!,
         name: test.name,
         status: 'failed',
         duration,
@@ -168,31 +202,12 @@ export class TestRunner {
    * Get tests to run based on filter
    */
   private getTestsToRun(): TestCase[] {
-    let tests = this.collection.tests || [];
+    let tests = this.collection.requests || this.collection.tests || [];
 
     if (this.config.filter) {
       try {
         const filter = TestFilter.parseFilterString(this.config.filter);
         tests = filter.filterTests(tests);
-        logger.info(`Filtered to ${tests.length} REST test(s) matching: ${filter.getSummary()}`);
-      } catch (error) {
-        logger.warn(`Invalid filter pattern: ${this.config.filter}`);
-      }
-    }
-
-    return tests;
-  }
-
-  /**
-   * Get GraphQL tests to run based on filter
-   */
-  private getGraphQLTestsToRun(): GraphQLTestCase[] {
-    let tests = this.collection.graphql || [];
-
-    if (this.config.filter) {
-      try {
-        const filter = TestFilter.parseFilterString(this.config.filter);
-        tests = filter.filterGraphQLTests(tests);
       } catch (error) {
         logger.warn(`Invalid filter pattern: ${this.config.filter}`);
       }
@@ -204,7 +219,7 @@ export class TestRunner {
   /**
    * Execute a GraphQL test
    */
-  private async runGraphQLTest(test: GraphQLTestCase): Promise<TestExecution | null> {
+  private async runGraphQLTest(test: TestCase): Promise<TestExecution | null> {
     const startTime = Date.now();
 
     try {
@@ -212,7 +227,7 @@ export class TestRunner {
       if (test.skip) {
         logger.info(`⊘ SKIP: ${test.name}`);
         return {
-          id: test.id,
+          id: test.id!,
           name: test.name,
           status: 'skipped',
           duration: 0,
@@ -226,9 +241,9 @@ export class TestRunner {
 
       // Build and execute GraphQL request
       const axiosConfig = this.requestBuilder.buildGraphQLRequest(
-        test.endpoint,
-        test.query,
-        test.variables,
+        test.request.endpoint!,
+        test.request.query!,
+        test.request.variables,
         test.auth,
         this.variableResolver.getVariables()
       );
@@ -242,15 +257,14 @@ export class TestRunner {
             key, 
             Array.isArray(value) ? value.join(',') : String(value)
           ])
-        ) as Headers : {},
+        ) : {},
         body: axiosConfig.data,
-        timeout: axiosConfig.timeout,
       };
 
       const response = await this.httpClient.execute(request);
 
       // Run assertions
-      const assertions = this.assertionEngine.evaluateAssertions(test.assertions, response);
+      const assertions = this.assertionEngine.evaluateAssertions(test.assertions!, response);
 
       // Check if all assertions passed
       const passed = assertions.every((a) => a.passed);
@@ -264,7 +278,7 @@ export class TestRunner {
       }
 
       const result: TestExecution = {
-        id: test.id,
+        id: test.id!,
         name: test.name,
         status: passed ? 'passed' : 'failed',
         duration: response.duration,
@@ -297,7 +311,7 @@ export class TestRunner {
       logger.error(`✗ ERROR: ${test.name} - ${errorMsg}`);
 
       return {
-        id: test.id,
+        id: test.id!,
         name: test.name,
         status: 'failed',
         duration,
@@ -343,14 +357,21 @@ export async function createAndRunTests(
   results: TestExecution[];
   summary: ReturnType<TestRunner['getSummary']>;
 }> {
-  const configLoader = new ConfigLoader({
-    envName: config.envName,
-  });
+  // Load collection file
+  const collection = loadCollection(collectionPath);
+  const validation = validateCollection(collection);
+  const validated = validation.data || collection;
 
-  const collection = configLoader.loadCollection(collectionPath);
-  const validated = validateCollection(collection) as Collection;
+  // Use provided variables from auto-detection, fall back to loading from file
+  const envVars = config.variables || loadEnvFile('.zelte.env');
 
-  const runner = new TestRunner(validated, config, configLoader);
+  // Merge baseUrl from config into collection if not already set
+  if (config.baseUrl && !collection.baseUrl) {
+    validated.baseUrl = config.baseUrl;
+  }
+
+  // Create and run tests
+  const runner = new TestRunner(validated, config, envVars);
   const results = await runner.run();
 
   return {

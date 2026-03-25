@@ -1,0 +1,111 @@
+{
+  "version": "1.0",
+  "name": "Auth API - JSON Shorthand",
+  "description": "API tests using shorthand syntax in JSON format",
+
+  "variables": {
+    "baseUrl": "http://localhost:3000",
+    "testEmail": "test@mail.com",
+    "testPassword": 123456
+  },
+
+  "tests": [
+    {
+      "id": "auth-login",
+      "name": "Login - Shorthand JSON",
+      "request": {
+        "method": "POST",
+        "url": "${baseUrl}/auth/login",
+        "body": {
+          "email": "${testEmail}",
+          "password": "${testPassword}"
+        }
+      },
+      "assertions": [
+        "statusCode === 200",
+        "body.token !== null",
+        "typeof body.token === 'string'"
+      ]
+    },
+
+    {
+      "id": "register-user",
+      "name": "Register New User",
+      "request": {
+        "method": "POST",
+        "url": "${baseUrl}/auth/register",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "newuser@example.com",
+          "password": "SecurePass123",
+          "name": "New User"
+        }
+      },
+      "assertions": [
+        "statusCode === 201",
+        "body.id !== null",
+        "body.email !== null",
+        "body.createdAt !== null"
+      ]
+    },
+
+    {
+      "id": "get-users",
+      "name": "List All Users",
+      "request": {
+        "method": "GET",
+        "url": "${baseUrl}/users",
+        "headers": {
+          "Authorization": "Bearer ${token}"
+        }
+      },
+      "assertions": [
+        "statusCode === 200",
+        "Array.isArray(body.items)",
+        "body.items.length >= 0"
+      ]
+    },
+
+    {
+      "id": "update-profile",
+      "name": "Update User Profile",
+      "request": {
+        "method": "PUT",
+        "url": "${baseUrl}/users/1",
+        "body": {
+          "name": "Updated Name",
+          "bio": "API testing user"
+        }
+      },
+      "assertions": [
+        "statusCode === 200",
+        "body.name === 'Updated Name'"
+      ]
+    },
+
+    {
+      "id": "delete-user",
+      "name": "Delete User Account",
+      "request": {
+        "method": "DELETE",
+        "url": "${baseUrl}/users/1"
+      },
+      "assertions": [
+        "statusCode === 200 || statusCode === 204"
+      ]
+    }
+  ],
+
+  "comments": {
+    "shorthand": "All tests use simplified syntax that's easy to read and write",
+    "syntax": {
+      "method": "HTTP method: GET, POST, PUT, DELETE, PATCH",
+      "url": "Full URL with variable substitution ${baseUrl}",
+      "body": "Request body - automatically converted to JSON",
+      "headers": "Optional custom headers",
+      "assertions": "JavaScript expressions that must return true"
+    }
+  }
+}

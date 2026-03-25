@@ -94,20 +94,15 @@ export class HttpClient {
    */
   private buildAxiosConfig(request: HttpRequest): AxiosRequestConfig {
     const config: AxiosRequestConfig = {
-      method: request.method.toLowerCase() as any,
+      method: (request.method || 'GET').toLowerCase() as any,
       url: request.url,
-      timeout: request.timeout || this.timeout,
+      timeout: this.timeout,
       headers: request.headers || {},
     };
 
     // Add body if present
     if (request.body !== undefined && request.body !== null) {
       config.data = request.body;
-    }
-
-    // Add authentication
-    if (request.auth) {
-      this.applyAuth(config, request.auth);
     }
 
     return config;

@@ -38,31 +38,18 @@
   "homepage": "https://github.com/Cintoma123/zelte#readme",
   "dependencies": {
     "axios": "^1.6.0",
-    "boxen": "^8.0.1",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
-    "date-fns": "^3.0.0",
     "dotenv": "^16.3.1",
-    "figlet": "^1.10.0",
-    "glob": "^10.3.0",
-    "gradient-string": "^3.0.0",
-    "inquirer": "^9.2.7",
-    "jsonpath-plus": "^10.4.0",
-    "ora": "^8.0.1",
     "yaml": "^2.3.4",
-    "zod": "^4.3.6"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@types/boxen": "^2.1.0",
-    "@types/glob": "^8.1.0",
-    "@types/inquirer": "^9.0.3",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^8.0.0",
-    "husky": "^8.0.0",
     "jest": "^29.5.0",
-    "lint-staged": "^13.0.0",
     "prettier": "^3.0.0",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.0"
@@ -74,11 +61,5 @@
     "dist",
     "README.md",
     "LICENSE"
-  ],
-  "lint-staged": {
-    "*.ts": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  }
+  ]
 }

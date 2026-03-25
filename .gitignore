@@ -48,6 +48,10 @@ pnpm-lock.yaml
 .vscode/launch.json
 .vscode/extensions.json
 
+# Documentation (keep README.md, ignore all others)
+*.md
+!README.md
+
 # Project Documentation & Planning (local only)
 ARCHITECTURE.md
 IMPLEMENTATION_COMPLETE.md
@@ -56,6 +60,11 @@ PHASE0_CHECKLIST.md
 plan-zelte.prompt.md
 plan.md
 QUICK_REFERENCE.md
+CHANGELOG_ZERO_CONFIG.md
+SIMPLIFICATION.md
+TESTING.md
+THREE_COMMANDS_COMPLETE.md
+
 
 # Git
 .gitkeep

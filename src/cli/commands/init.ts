@@ -9,89 +9,80 @@ import { resolve } from 'path';
 import chalk from 'chalk';
 import { logger } from '../../utils/logger';
 
-const sampleCollection = `version: "1.0"
-name: "Sample API Tests"
-description: "Basic example collection"
+const sampleCollection = `# Zelte API Test Collection
+# Simple, effortless API testing
 
-variables:
-  baseUrl: "http://localhost:3000"
-  timeout: 30000
+name: "My API Tests"
+description: "Quick API test collection"
 
-tests:
-  - id: "get-health"
-    name: "Check API Health"
+requests:
+  - name: API Health Check
     request:
       method: GET
-      url: "\${baseUrl}/health"
-    assertions:
-      - status == 200
+      url: /health
+    expect:
+      status: 200
 
-  - id: "create-item"
-    name: "Create New Item"
+  - name: User Login
     request:
       method: POST
-      url: "\${baseUrl}/items"
+      url: /auth/login
       headers:
-        Content-Type: "application/json"
+        Content-Type: application/json
       body:
-        name: "Sample Item"
-        description: "This is a test item"
-    assertions:
-      - status == 201
-      - body.id exists
+        email: test@mail.com
+        password: 123456
+    expect:
+      status: 200
 
-graphql:
-  - id: "gql-query-user"
-    name: "Query User via GraphQL"
-    endpoint: "\${baseUrl}/graphql"
-    query: |
-      query GetUser(\$id: ID!) {
-        user(id: \$id) {
-          id
-          name
-          email
-        }
-      }
-    variables:
-      id: "1"
-    assertions:
-      - status == 200
-      - body.data.user.id exists
+  - name: Get User Profile
+    request:
+      method: GET
+      url: /users/me
+    expect:
+      status: 200
 `;
 
 const sampleCollectionJSON = `{
-  "version": "1.0",
-  "name": "Sample API Tests",
-  "description": "Basic example collection",
-  "variables": {
-    "baseUrl": "http://localhost:3000",
-    "timeout": 30000
-  },
-  "tests": [
+  "name": "My API Tests",
+  "description": "Quick API test collection",
+  "requests": [
     {
-      "id": "get-health",
-      "name": "Check API Health",
+      "name": "API Health Check",
       "request": {
         "method": "GET",
-        "url": "\${baseUrl}/health"
+        "url": "/health"
       },
-      "assertions": ["status == 200"]
+      "expect": {
+        "status": 200
+      }
     },
     {
-      "id": "create-item",
-      "name": "Create New Item",
+      "name": "User Login",
       "request": {
         "method": "POST",
-        "url": "\${baseUrl}/items",
+        "url": "/auth/login",
         "headers": {
           "Content-Type": "application/json"
         },
         "body": {
-          "name": "Sample Item",
-          "description": "This is a test item"
+          "email": "test@mail.com",
+          "password": 123456
         }
       },
-      "assertions": ["status == 201", "body.id exists"]
+      "expect": {
+        "status": 200
+      }
+    },
+    {
+      "name": "Get User Profile",
+      "request": {
+        "method": "GET",
+        "url": "/users/me"
+      },
+      "expect": {
+        "status": 200
+      }
     }
   ]
 }`;
@@ -116,7 +107,7 @@ export const initCommand = new Command('init')
       const dir = options.dir;
       // Default to YAML if neither is specified, or if --yaml is explicitly set
       const useJson = options.json && !options.yaml;
-      const collectionFileName = useJson ? 'collection.zelte.json' : 'collection.zelte.yaml';
+      const collectionFileName = useJson ? 'collection.json' : 'collection.yaml';
       const collectionPath = resolve(dir, collectionFileName);
       const envPath = resolve(dir, '.zelte.env');
       const envExamplePath = resolve(dir, '.zelte.env.example');
