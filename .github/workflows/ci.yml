@@ -18,12 +18,16 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Use Node.js 24.x
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Install dependencies
         run: npm ci
@@ -39,6 +43,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Run npm audit
         run: npm audit --audit-level=moderate
@@ -56,12 +62,16 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Install dependencies
         run: npm ci
@@ -88,12 +98,16 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Use Node.js 24.x
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
       - name: Install dependencies
         run: npm ci
