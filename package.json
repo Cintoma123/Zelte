@@ -4,7 +4,7 @@
   "description": "Lightweight terminal-first API testing tool for backend engineers",
   "main": "dist/cli/index.js",
   "bin": {
-    "zelte": "./dist/cli/index.js"
+    "zelte": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",

@@ -87,6 +87,16 @@ jobs:
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           BETA_VERSION="${PACKAGE_VERSION}-beta.$(date +'%s')"
           npm version $BETA_VERSION --no-git-tag-version
+
+      - name: Verify npm auth token
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            echo "NPM_TOKEN secret is missing. Set repository secret NPM_TOKEN to an npm Automation token with publish rights." >&2
+            exit 1
+          fi
+          npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish to npm (beta tag)
         run: npm publish --tag beta
