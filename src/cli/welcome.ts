@@ -45,7 +45,7 @@ function generateLogo(): string {
   
   // Apply gradient to each line of the ASCII art
   const lines = logoText.split('\n');
-  const gradientLines = lines.map(line => {
+  const gradientLines = lines.map((line: string) => {
     if (line.trim() === '') return line;
     return gradient(colors.primary, colors.secondary)(line);
   });
