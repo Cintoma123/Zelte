@@ -16,6 +16,8 @@ jobs:
   quality-check:
     name: Quality Check
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +40,8 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +53,8 @@ jobs:
     name: Build and Publish Release
     runs-on: ubuntu-latest
     needs: [quality-check, security-scan]
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
       - uses: actions/checkout@v4
