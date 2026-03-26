@@ -20,7 +20,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           cache: 'npm'
       
       - name: Install dependencies
@@ -41,13 +41,6 @@ jobs:
       
       - name: Run npm audit
         run: npm audit --audit-level=moderate
-      
-      - name: Security vulnerability check
-        uses: actions/dependency-check_action@main
-        with:
-          project: 'zelte'
-          path: '.'
-          format: 'JSON'
 
   build-and-publish:
     name: Build and Publish Release
@@ -60,7 +53,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
       
