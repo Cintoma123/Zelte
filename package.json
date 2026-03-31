@@ -1,5 +1,5 @@
 {
-  "name": "@nnachebe/zelte",
+  "name": "zelte",
   "version": "0.1.0",
   "description": "Lightweight terminal-first API testing tool for backend engineers",
   "main": "dist/cli/index.js",
@@ -41,9 +41,10 @@
   },
   "homepage": "https://github.com/Cintoma123/zelte#readme",
   "dependencies": {
+    "@nnachebe/zelte": "^0.1.0-beta.1774925166",
     "axios": "^1.6.0",
-    "chalk": "^4.1.2",
     "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
     "figlet": "^1.8.2",
@@ -53,8 +54,8 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
     "@types/figlet": "^1.7.0",
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

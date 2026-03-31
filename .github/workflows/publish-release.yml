@@ -102,18 +102,24 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.PACKAGE_VERSION }}
-          release_name: Release v${{ steps.version.outputs.PACKAGE_VERSION }}
+          name: Release v${{ steps.version.outputs.PACKAGE_VERSION }}
           body: |
             Stable release published to npm.
             
             Install with:
             ```bash
-            npm install zelte@latest
+            npm install zelte
+            ```
+            
+            Global install:
+            ```bash
+            npm install -g zelte
+            zelte --help
             ```
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

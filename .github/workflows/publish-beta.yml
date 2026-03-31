@@ -104,12 +104,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Create GitHub Release (Beta)
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: beta-${{ github.sha }}
-          release_name: Beta Release
+          name: Beta Release
           body: |
             Beta release published to npm.
             
@@ -118,6 +116,14 @@ jobs:
             npm install zelte@beta
             ```
             
+            Global install:
+            ```bash
+            npm install -g zelte@beta
+            zelte --help
+            ```
+            
             This is a pre-release version for testing. Do not use in production.
           draft: false
           prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
