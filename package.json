@@ -1,5 +1,5 @@
 {
-  "name": "@zelte/zelte",
+  "name": "@nnachebe/zelte",
   "version": "0.1.0",
   "description": "Lightweight terminal-first API testing tool for backend engineers",
   "main": "dist/cli/index.js",
