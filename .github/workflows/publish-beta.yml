@@ -113,12 +113,12 @@ jobs:
             
             Install with:
             ```bash
-            npm install zelte@beta
+            npm install @nnachebe/zelte@beta
             ```
             
             Global install:
             ```bash
-            npm install -g zelte@beta
+            npm install -g @nnachebe/zelte@beta
             zelte --help
             ```
             
