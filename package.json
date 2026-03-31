@@ -1,5 +1,5 @@
 {
-  "name": "@evidence/zelte",
+  "name": "@zelte/zelte",
   "version": "0.1.0",
   "description": "Lightweight terminal-first API testing tool for backend engineers",
   "main": "dist/cli/index.js",
@@ -28,6 +28,10 @@
   ],
   "author": "Calistus <calistusumehnnachebe@gmail.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Cintoma123/zelte.git"
