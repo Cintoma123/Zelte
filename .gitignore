@@ -1,98 +1,77 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+ui/node_modules/
 
 # Build output
 dist/
 build/
+.next/
+out/
+ui/.next/
+ui/out/
 *.tsbuildinfo
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
 
-# Environment variables (NEVER commit)
+# Environment variables and secrets (NEVER commit)
+.env
+.env.local
+.env.*.local
 .zelte.env
 .zelte.env.local
 .zelte.env.*.local
-
-# Testing
-coverage/
-.nyc_output/
-*.lcov
-
-# OS files
-Thumbs.db
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Package manager
-# Note: package-lock.json IS committed for GitHub Actions caching
-yarn.lock
-pnpm-lock.yaml
-
-# IDE suggestions
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-
-# NPM Registry & Authentication (NEVER commit)
 .npmrc
 .npm-authtoken
 npm-authtoken
 .npm/
 *.npmrc
 
-# Build artifacts for publishing
-dist/
-build/
+# Testing artifacts
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+*.json.bak
 
-# Local environment files
-.env
-.env.local
-.env.*.local
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Documentation (keep README.md, ignore all others)
-*.md
-!README.md
+# OS/temp files
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+tmp/
+temp/
+*.tmp
 
-# UI Documentation (if any markdown files in ui/)
-ui/**/*.md
-
-# Project Documentation & Planning (local only)
+# Local planning/docs files not needed on GitHub
 ARCHITECTURE.md
+CHANGELOG_ZERO_CONFIG.md
 IMPLEMENTATION_COMPLETE.md
 implementation-plan.md
 PHASE0_CHECKLIST.md
 plan-zelte.prompt.md
 plan.md
+ui-prompt.plan.md
 QUICK_REFERENCE.md
-CHANGELOG_ZERO_CONFIG.md
 SIMPLIFICATION.md
 TESTING.md
 THREE_COMMANDS_COMPLETE.md
+ZERO_CONFIG_COMPLETE.md
+ZERO_CONFIG_IMPLEMENTATION.md
+ZERO_CONFIG_SUMMARY.md
 mock-server.js
 test-collection.yaml
-
-
-# Git
-.gitkeep
-
-# Test fixtures that should be ignored
-test-results/
-*.json.bak
-
-
- 
+docs/assertions-old.md
+docs/getting-started-quick.md
+docs/zero-config-guide.md
