@@ -3,8 +3,12 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - 'ui/**'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - 'ui/**'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

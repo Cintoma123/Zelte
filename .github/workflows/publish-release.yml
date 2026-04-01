@@ -7,6 +7,8 @@ on:
       - 'package.json'
       - 'src/**'
       - '.github/workflows/publish-release.yml'
+    paths-ignore:
+      - 'ui/**'
   workflow_dispatch:
 
 env:
