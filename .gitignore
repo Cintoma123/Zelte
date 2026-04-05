@@ -39,7 +39,7 @@ temp/
 *.tmp
 
 # Package manager
-package-lock.json
+# Note: package-lock.json IS committed for GitHub Actions caching
 yarn.lock
 pnpm-lock.yaml
 
@@ -67,6 +67,9 @@ build/
 # Documentation (keep README.md, ignore all others)
 *.md
 !README.md
+
+# UI Documentation (if any markdown files in ui/)
+ui/**/*.md
 
 # Project Documentation & Planning (local only)
 ARCHITECTURE.md
